@@ -1,0 +1,20 @@
+{
+  "name": "tg-triviabot",
+  "version": "0.0.1",
+  "description": "triviabot for telegram",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "triviabot"
+  ],
+  "author": "FruitieX",
+  "license": "ISC",
+  "dependencies": {
+    "mkdirp": "^0.5.1",
+    "node-telegram-bot": "^0.1.4",
+    "underscore": "^1.8.3"
+  }
+}
