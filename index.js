@@ -173,6 +173,15 @@ var nextRound = function(chat) {
             Question.findOne().skip(skipCnt).exec(function(err, question) {
                 gs.question = question;
                 gs.hintChars = [];
+
+                // add spaces to hint chars
+                var answer = gs.question.answers[0];
+                for (var i = 0; i < answer.length; i++) {
+                    if (answer[i] === ' ') {
+                        gs.hintChars.push(i);
+                    }
+                }
+
                 gs.numHints = 0;
 
                 bot.sendMessage({
