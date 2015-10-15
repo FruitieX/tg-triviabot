@@ -17,7 +17,7 @@ try {
     console.log('unable to find highscores, will start without them!');
 }
 
-var hintTime = 12000;
+var hintTime = 11000;
 var intermissionTime = 8000;
 
 var states = {};
