@@ -8,14 +8,12 @@ mkdirp(process.env.HOME + '/.triviabot');
 
 var questions = JSON.parse(fs.readFileSync(process.env.HOME + '/.triviabot/questions.json'));
 
-// TODO: highscores
-/*
-var highScores;
+var highScores = {};
 try {
     highScores = JSON.parse(fs.readFileSync(process.env.HOME + '/.triviabot/highscores.json'));
 } catch(e) {
+    console.log('unable to find highscores, will start without them!');
 }
-*/
 
 var hintTime = 12000;
 var intermissionTime = 5000;
@@ -54,6 +52,7 @@ var sendHint = function(chat) {
         });
 
         printStandings(chat);
+        gs.active = false;
         setTimeout(function() {
             nextRound(chat);
         }, intermissionTime);
@@ -103,12 +102,69 @@ var nextRound = function(chat) {
     gs.hintTimeout = null;
 
     gs.round++;
+    gs.active = true;
 
     if (gs.round > 10) {
+        var s = '';
+
+        if (_.keys(gs.scores).length) {
+            var standings = '';
+
+            var scores = [];
+
+            _.each(_.keys(gs.scores), function(id) {
+                scores.push(gs.scores[id]);
+            });
+
+            scores = _.sortBy(scores, 'score');
+
+            if (!scores[0].score) {
+                s = 'Nobody scored any points!';
+            } else if (scores[1] && scores[0].score === scores[1].score) {
+                s = 'It\'s a draw!';
+            } else {
+                s = scores[0].firstName + ' wins the game!';
+
+                if (!highScores[chat]) {
+                    highScores[chat] = {};
+                }
+                if (!highScores[chat][scores[0].id]) {
+                    highScores[chat][scores[0].id] = {
+                        firstName: scores[0].firstName,
+                        lastName: scores[0].lastName,
+                        score: 0
+                    };
+                }
+
+                highScores[chat][scores[0].id].score++;
+
+                fs.writeFileSync(JSON.stringify(highScores), process.env.HOME + '/.triviabot/highscores.json');
+            }
+
+            s += '\n\nHighscores for this group:\n\n';
+
+            if (_.keys(highScores[chat]).length) {
+                var scores = [];
+
+                _.each(_.keys(highScores[chat]), function(id) {
+                    scores.push(highScores[chat][id]);
+                });
+
+                scores = _.sortBy(scores, 'score');
+
+                for (var i = 0; i < 10 && i < scores.length; i++) {
+                    var score = scores[i];
+                    s += (i + 1) + ': ' + score.firstName + ': ' + score.score + '\n';
+                }
+            }
+        }
+
         bot.sendMessage({
-            text: 'Game over!',
+            text: 'Game over! ' + s,
             chat_id: chat
         });
+
+        delete states[chat];
     } else {
         var question = questions[Math.floor(Math.random() * questions.length)];
         gs.question = question;
@@ -163,6 +219,7 @@ var startTrivia = function(chat, from) {
         round: 0,
         scores: {},
         numHints: 0,
+        active: false,
         hintTimeout: null
     };
 
@@ -177,6 +234,10 @@ var startTrivia = function(chat, from) {
 var verifyAnswer = function(chat, from, text) {
     var gs = states[chat];
 
+    if (!gs.active) {
+        return;
+    }
+
     text = text.toLowerCase();
     for (var i = 0; i < gs.question.answers.length; i++) {
         var answer = gs.question.answers[i].toLowerCase();
@@ -184,6 +245,7 @@ var verifyAnswer = function(chat, from, text) {
         if (answer === text) {
             if (!gs.scores[from.id]) {
                 gs.scores[from.id] = {
+                    id: from.id,
                     firstName: from.first_name,
                     lastName: from.last_name,
                     score: 0
@@ -199,6 +261,7 @@ var verifyAnswer = function(chat, from, text) {
                 printStandings(chat);
             });
 
+            gs.active = false;
             setTimeout(function() {
                 nextRound(chat);
             }, intermissionTime);
