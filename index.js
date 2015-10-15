@@ -3,10 +3,12 @@
 var _ = require('underscore');
 var fs = require('fs');
 
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/triviabot');
+var Question = require('./question_schema');
+
 var mkdirp = require('mkdirp');
 mkdirp(process.env.HOME + '/.triviabot');
-
-var questions = JSON.parse(fs.readFileSync(process.env.HOME + '/.triviabot/questions.json'));
 
 var highScores = {};
 try {
@@ -53,7 +55,7 @@ var sendHint = function(chat) {
 
         printStandings(chat);
         gs.active = false;
-        setTimeout(function() {
+        gs.intermissionTimeout = setTimeout(function() {
             nextRound(chat);
         }, intermissionTime);
     } else {
@@ -166,19 +168,23 @@ var nextRound = function(chat) {
 
         delete states[chat];
     } else {
-        var question = questions[Math.floor(Math.random() * questions.length)];
-        gs.question = question;
-        gs.hintChars = [];
-        gs.numHints = 0;
+        Question.count(function(err, questionCnt) {
+            var skipCnt = Math.floor(Math.random() * questionCnt);
+            Question.findOne().skip(skipCnt).exec(function(err, question) {
+                gs.question = question;
+                gs.hintChars = [];
+                gs.numHints = 0;
 
-        bot.sendMessage({
-            text: 'Round: ' + gs.round + '/10:\nQuestion: ' + question.question,
-            chat_id: chat
+                bot.sendMessage({
+                    text: 'Round: ' + gs.round + '/10:\nQuestion (' + (question.category || 'no category') + '): ' + question.question,
+                    chat_id: chat
+                });
+
+                gs.hintTimeout = setTimeout(function() {
+                    sendHint(chat);
+                }, hintTime);
+            });
         });
-
-        gs.hintTimeout = setTimeout(function() {
-            sendHint(chat);
-        }, hintTime);
     }
 };
 
@@ -195,7 +201,7 @@ var stopTrivia = function(chat, from) {
     }
 
     clearTimeout(gs.hintTimeout);
-    gs.hintTimeout = null;
+    clearTimeout(gs.intermissionTimeout);
 
     bot.sendMessage({
         text: 'Trivia stopped.',
@@ -222,7 +228,8 @@ var startTrivia = function(chat, from) {
         scores: {},
         numHints: 0,
         active: false,
-        hintTimeout: null
+        hintTimeout: null,
+        intermissionTimeout: null
     };
 
     bot.sendMessage({
@@ -264,7 +271,8 @@ var verifyAnswer = function(chat, from, text) {
             });
 
             gs.active = false;
-            setTimeout(function() {
+            clearTimeout(gs.hintTimeout);
+            gs.intermissionTimeout = setTimeout(function() {
                 nextRound(chat);
             }, intermissionTime);
 
@@ -273,23 +281,65 @@ var verifyAnswer = function(chat, from, text) {
     }
 };
 
-var token = require(process.env.HOME + '/.triviabot/token.js');
-var Bot = require('node-telegram-bot');
-var bot = new Bot({
-    token: token
-})
-.on('message', function(msg) {
-    if (msg.text) {
-        if (!msg.text.indexOf('/trivia')) {
-            startTrivia(msg.chat.id, msg.from);
-        } else if (states[msg.chat.id]) {
-            if (!msg.text.indexOf('/stoptrivia')) {
-                stopTrivia(msg.chat.id, msg.from);
-            } else {
-                verifyAnswer(msg.chat.id, msg.from, msg.text);
+var reportQuestion = function(chat) {
+    var gs = states[chat];
+
+    if (!gs.active) {
+        return;
+    }
+
+    Question.findById(gs.question._id, function(err, question) {
+        if (err) {
+            console.log('error while reporting question!');
+            console.log(err);
+            return;
+        }
+
+        question.rating -= 1;
+
+        question.save(function(err) {
+            if (err) {
+                console.log('error while saving question report!');
+                console.log(err);
+                return;
+            }
+
+            bot.sendMessage({
+                text: 'Reported question as bad.',
+                chat_id: chat
+            });
+        });
+    });
+};
+
+var bot;
+Question.count(function(err, questionCnt) {
+    if (!questionCnt) {
+        console.log('no questions found in database!');
+        console.log('please add some questions before launching triviabot.');
+        process.exit(0);
+    }
+
+    var token = require(process.env.HOME + '/.triviabot/token.js');
+    var Bot = require('node-telegram-bot');
+    bot = new Bot({
+        token: token
+    })
+    .on('message', function(msg) {
+        if (msg.text) {
+            if (!msg.text.indexOf('/trivia')) {
+                startTrivia(msg.chat.id, msg.from);
+            } else if (states[msg.chat.id]) {
+                if (!msg.text.indexOf('/stoptrivia')) {
+                    stopTrivia(msg.chat.id, msg.from);
+                } else if (!msg.text.indexOf('/badquestion')) {
+                    reportQuestion(msg.chat.id);
+                } else {
+                    verifyAnswer(msg.chat.id, msg.from, msg.text);
+                }
             }
         }
-    }
-});
+    });
 
-bot.start();
+    bot.start();
+});

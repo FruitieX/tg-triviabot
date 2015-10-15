@@ -13,7 +13,9 @@
   "author": "FruitieX",
   "license": "ISC",
   "dependencies": {
+    "async": "^1.4.2",
     "mkdirp": "^0.5.1",
+    "mongoose": "^4.1.11",
     "node-telegram-bot": "^0.1.4",
     "underscore": "^1.8.3"
   }
