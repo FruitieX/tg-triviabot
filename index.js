@@ -18,7 +18,7 @@ try {
 }
 
 var hintTime = 12000;
-var intermissionTime = 5000;
+var intermissionTime = 8000;
 
 var states = {};
 
