@@ -32,8 +32,10 @@ var sendHint = function(chat) {
     // reveal 1/4 of remaining characters
     var numChars = Math.ceil(remainingChars.length / 4);
 
-    for (var i = 0; i < numChars; i++) {
-        gs.hintChars.push(remainingChars[i]);
+    if (remainingChars.length > 1) {
+        for (var i = 0; i < numChars; i++) {
+            gs.hintChars.push(remainingChars[i]);
+        }
     }
 
     var hint = answer;
@@ -47,7 +49,7 @@ var sendHint = function(chat) {
 
     gs.numHints++;
 
-    if (gs.numHints > 2) {
+    if (gs.numHints > 3) {
         bot.sendMessage({
             text: 'Time\'s up! The answer was: "' + answer + '"',
             chat_id: chat
@@ -105,7 +107,6 @@ var nextRound = function(chat) {
     gs.hintTimeout = null;
 
     gs.round++;
-    gs.active = true;
 
     if (gs.round > 10) {
         var s = '';
@@ -123,38 +124,41 @@ var nextRound = function(chat) {
             scores.reverse();
 
             if (!scores[0].score) {
-                s = 'Nobody scored any points!';
+                s += 'Nobody scored any points!\n';
             } else {
                 var draw = false;
                 if (scores[1] && scores[0].score === scores[1].score) {
                     s = 'It\'s a draw!\n';
                     draw = true;
                 } else {
-                    s = scores[0].firstName + ' wins the game!';
+                    s = scores[0].firstName + ' wins the game!\n';
                 }
 
-                if (!highScores[chat]) {
-                    highScores[chat] = {};
-                }
-                _.each(scores, function(score) {
-                    if (!highScores[chat][score.id]) {
-                        highScores[chat][score.id] = {
-                            firstName: score.firstName,
-                            lastName: score.lastName,
-                            wins: 0,
-                            score: 0
-                        };
+                if (_.keys(gs.players).length >= 3) {
+                    if (!highScores[chat]) {
+                        highScores[chat] = {};
                     }
-                    if (!draw && score.id === scores[0].id) {
-                        highScores[chat][score.id].wins++;
-                    }
-                    highScores[chat][score.id].score += score.score;
-                });
+                    _.each(scores, function(score) {
+                        if (!highScores[chat][score.id]) {
+                            highScores[chat][score.id] = {
+                                firstName: score.firstName,
+                                lastName: score.lastName,
+                                wins: 0,
+                                score: 0
+                            };
+                        }
+                        if (!draw && score.id === scores[0].id) {
+                            highScores[chat][score.id].wins++;
+                        }
+                        highScores[chat][score.id].score += score.score;
+                    });
 
-                fs.writeFileSync(process.env.HOME + '/.triviabot/highscores.json', JSON.stringify(highScores));
+                    fs.writeFileSync(process.env.HOME + '/.triviabot/highscores.json', JSON.stringify(highScores));
+                } else {
+                    s += 'Note: only ' + _.keys(gs.players).length + ' players played during this round.\n';
+                    s += 'Need at least 3 active players for scores to count toward highscores!\n';
+                }
             }
-
-            s += '\n\nHighscores for this group:\n\n';
 
             if (_.keys(highScores[chat]).length) {
                 var scores = [];
@@ -166,11 +170,15 @@ var nextRound = function(chat) {
                 scores = _.sortBy(scores, 'score');
                 scores.reverse();
 
+                s += '\nHighscores for this group:\n\n';
+
                 for (var i = 0; i < 10 && i < scores.length; i++) {
                     var score = scores[i];
                     s += (i + 1) + ': ' + score.firstName + ': ' + score.score + ' (wins: ' + score.wins + ')\n';
                 }
             }
+        } else {
+            s += 'Nobody scored any points!\n';
         }
 
         bot.sendMessage({
@@ -183,6 +191,8 @@ var nextRound = function(chat) {
         Question.count(function(err, questionCnt) {
             var skipCnt = Math.floor(Math.random() * questionCnt);
             Question.findOne().skip(skipCnt).exec(function(err, question) {
+                // set game state to active only after we've retrieved the next question
+                gs.active = true;
                 gs.question = question;
                 gs.hintChars = [];
 
@@ -250,7 +260,8 @@ var startTrivia = function(chat, from) {
         numHints: 0,
         active: false,
         hintTimeout: null,
-        intermissionTimeout: null
+        intermissionTimeout: null,
+        players: {}
     };
 
     bot.sendMessage({
@@ -267,6 +278,9 @@ var verifyAnswer = function(chat, from, text) {
     if (!gs.active) {
         return;
     }
+
+    // for keeping track of players per round
+    gs.players[from.id] = true;
 
     text = text.toLowerCase();
     for (var i = 0; i < gs.question.answers.length; i++) {
