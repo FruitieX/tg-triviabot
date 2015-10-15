@@ -138,7 +138,7 @@ var nextRound = function(chat) {
 
                 highScores[chat][scores[0].id].score++;
 
-                fs.writeFileSync(JSON.stringify(highScores), process.env.HOME + '/.triviabot/highscores.json');
+                fs.writeFileSync(process.env.HOME + '/.triviabot/highscores.json', JSON.stringify(highScores));
             }
 
             s += '\n\nHighscores for this group:\n\n';
