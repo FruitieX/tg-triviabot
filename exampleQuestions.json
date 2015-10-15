@@ -1,0 +1,26 @@
+[
+  {
+    "category": "Science & Nature",
+    "question": "A __________ Breathes Only 10 Times In Hibernation",
+    "answers": [
+      "Woodchuck"
+    ],
+    "rating": 0
+  },
+  {
+    "category": "Movies",
+    "question": "Who played the Fussy Albert Basserman in the Boys from Brazil?",
+    "answers": [
+      "Laurence Oliver"
+    ],
+    "rating": 0
+  },
+  {
+    "category": "Quotations",
+    "question": "\"'He means well' is ----------- unless he does well.\"- Plautus",
+    "answers": [
+      "useless"
+    ],
+    "rating": 0
+  }
+]
