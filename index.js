@@ -86,6 +86,7 @@ var printStandings = function(chat) {
     });
 
     scores = _.sortBy(scores, 'score');
+    scores.reverse();
 
     _.each(scores, function(score) {
         standings += score.firstName + ': ' + score.score + '\n';
@@ -119,6 +120,7 @@ var nextRound = function(chat) {
             });
 
             scores = _.sortBy(scores, 'score');
+            scores.reverse();
 
             if (!scores[0].score) {
                 s = 'Nobody scored any points!';
@@ -153,6 +155,7 @@ var nextRound = function(chat) {
                 });
 
                 scores = _.sortBy(scores, 'score');
+                scores.reverse();
 
                 for (var i = 0; i < 10 && i < scores.length; i++) {
                     var score = scores[i];
