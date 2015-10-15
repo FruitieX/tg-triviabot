@@ -201,6 +201,8 @@ var stopTrivia = function(chat, from) {
         text: 'Trivia stopped.',
         chat_id: chat
     });
+
+    delete states[chat];
 };
 
 var startTrivia = function(chat, from) {
