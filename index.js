@@ -124,10 +124,14 @@ var nextRound = function(chat) {
 
             if (!scores[0].score) {
                 s = 'Nobody scored any points!';
-            } else if (scores[1] && scores[0].score === scores[1].score) {
-                s = 'It\'s a draw!';
             } else {
-                s = scores[0].firstName + ' wins the game!';
+                var draw = false;
+                if (scores[1] && scores[0].score === scores[1].score) {
+                    s = 'It\'s a draw!\n';
+                    draw = true;
+                } else {
+                    s = scores[0].firstName + ' wins the game!';
+                }
 
                 if (!highScores[chat]) {
                     highScores[chat] = {};
@@ -141,7 +145,9 @@ var nextRound = function(chat) {
                             score: 0
                         };
                     }
-                    highScores[chat][score.id].wins++;
+                    if (!draw && score.id === scores[0].id) {
+                        highScores[chat][score.id].wins++;
+                    }
                     highScores[chat][score.id].score += score.score;
                 });
 
