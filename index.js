@@ -17,8 +17,8 @@ try {
     console.log('unable to find highscores, will start without them!');
 }
 
-var hintTime = 11000;
-var intermissionTime = 8000;
+var hintTime = 15000;
+var intermissionTime = 10000;
 
 var states = {};
 
@@ -124,23 +124,32 @@ var nextRound = function(chat) {
 
             if (!scores[0].score) {
                 s = 'Nobody scored any points!';
-            } else if (scores[1] && scores[0].score === scores[1].score) {
-                s = 'It\'s a draw!';
             } else {
-                s = scores[0].firstName + ' wins the game!';
+                var draw = false;
+                if (scores[1] && scores[0].score === scores[1].score) {
+                    s = 'It\'s a draw!\n';
+                    draw = true;
+                } else {
+                    s = scores[0].firstName + ' wins the game!';
+                }
 
                 if (!highScores[chat]) {
                     highScores[chat] = {};
                 }
-                if (!highScores[chat][scores[0].id]) {
-                    highScores[chat][scores[0].id] = {
-                        firstName: scores[0].firstName,
-                        lastName: scores[0].lastName,
-                        score: 0
-                    };
-                }
-
-                highScores[chat][scores[0].id].score++;
+                _.each(scores, function(score) {
+                    if (!highScores[chat][score.id]) {
+                        highScores[chat][score.id] = {
+                            firstName: score.firstName,
+                            lastName: score.lastName,
+                            wins: 0,
+                            score: 0
+                        };
+                    }
+                    if (!draw && score.id === scores[0].id) {
+                        highScores[chat][score.id].wins++;
+                    }
+                    highScores[chat][score.id].score += score.score;
+                });
 
                 fs.writeFileSync(process.env.HOME + '/.triviabot/highscores.json', JSON.stringify(highScores));
             }
@@ -159,7 +168,7 @@ var nextRound = function(chat) {
 
                 for (var i = 0; i < 10 && i < scores.length; i++) {
                     var score = scores[i];
-                    s += (i + 1) + ': ' + score.firstName + ': ' + score.score + '\n';
+                    s += (i + 1) + ': ' + score.firstName + ': ' + score.score + ' (wins: ' + score.wins + ')\n';
                 }
             }
         }
