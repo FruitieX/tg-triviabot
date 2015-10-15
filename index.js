@@ -132,15 +132,18 @@ var nextRound = function(chat) {
                 if (!highScores[chat]) {
                     highScores[chat] = {};
                 }
-                if (!highScores[chat][scores[0].id]) {
-                    highScores[chat][scores[0].id] = {
-                        firstName: scores[0].firstName,
-                        lastName: scores[0].lastName,
-                        score: 0
-                    };
-                }
-
-                highScores[chat][scores[0].id].score++;
+                _.each(scores, function(score) {
+                    if (!highScores[chat][score.id]) {
+                        highScores[chat][score.id] = {
+                            firstName: score.firstName,
+                            lastName: score.lastName,
+                            wins: 0,
+                            score: 0
+                        };
+                    }
+                    highScores[chat][score.id].wins++;
+                    highScores[chat][score.id].score += score.score;
+                });
 
                 fs.writeFileSync(process.env.HOME + '/.triviabot/highscores.json', JSON.stringify(highScores));
             }
@@ -159,7 +162,7 @@ var nextRound = function(chat) {
 
                 for (var i = 0; i < 10 && i < scores.length; i++) {
                     var score = scores[i];
-                    s += (i + 1) + ': ' + score.firstName + ': ' + score.score + '\n';
+                    s += (i + 1) + ': ' + score.firstName + ': ' + score.score + ' (wins: ' + score.wins + ')\n';
                 }
             }
         }
