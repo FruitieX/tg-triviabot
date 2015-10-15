@@ -305,10 +305,6 @@ var verifyAnswer = function(chat, from, text) {
 var reportQuestion = function(chat) {
     var gs = states[chat];
 
-    if (!gs.active) {
-        return;
-    }
-
     Question.findById(gs.question._id, function(err, question) {
         if (err) {
             console.log('error while reporting question!');
