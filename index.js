@@ -351,7 +351,9 @@ var reportQuestion = function(chat) {
 
 var bot;
 var options = {
-    polling: true
+    polling: {
+        interval: 1000
+    }
 };
 
 Question.count(function(err, questionCnt) {
