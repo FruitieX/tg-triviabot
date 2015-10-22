@@ -22,6 +22,12 @@ var intermissionTime = 10000;
 
 var states = {};
 
+var sendMessage = function(bot, msg, callback) {
+    console.log('sending message');
+    console.log(msg);
+    bot.sendMessage(msg.chat_id, msg.text).then(callback);
+};
+
 var sendHint = function(chat) {
     var gs = states[chat];
     var answer = gs.question.answers[0];
@@ -50,7 +56,7 @@ var sendHint = function(chat) {
     gs.numHints++;
 
     if (gs.numHints > 3) {
-        bot.sendMessage({
+        sendMessage(bot, {
             text: 'Time\'s up! The answer was: "' + answer + '"',
             chat_id: chat
         });
@@ -61,7 +67,7 @@ var sendHint = function(chat) {
             nextRound(chat);
         }, intermissionTime);
     } else {
-        bot.sendMessage({
+        sendMessage(bot, {
             text: 'Hint: ' + hint,
             chat_id: chat
         });
@@ -94,7 +100,7 @@ var printStandings = function(chat) {
         standings += score.firstName + ': ' + score.score + '\n';
     })
 
-    bot.sendMessage({
+    sendMessage(bot, {
         text: 'Current standings: \n' + standings,
         chat_id: chat
     });
@@ -181,7 +187,7 @@ var nextRound = function(chat) {
             s += 'Nobody scored any points!\n';
         }
 
-        bot.sendMessage({
+        sendMessage(bot, {
             text: 'Game over! ' + s,
             chat_id: chat
         });
@@ -206,7 +212,7 @@ var nextRound = function(chat) {
 
                 gs.numHints = 0;
 
-                bot.sendMessage({
+                sendMessage(bot, {
                     text: 'Round: ' + gs.round + '/10:\nQuestion (' + (question.category || 'no category') + '): ' + question.question,
                     chat_id: chat
                 });
@@ -223,7 +229,7 @@ var stopTrivia = function(chat, from) {
     var gs = states[chat];
 
     if (from.id !== gs.startedBy) {
-        bot.sendMessage({
+        sendMessage(bot, {
             text: 'Trivia can only be stopped by whomever started it.',
             chat_id: chat
         });
@@ -234,7 +240,7 @@ var stopTrivia = function(chat, from) {
     clearTimeout(gs.hintTimeout);
     clearTimeout(gs.intermissionTimeout);
 
-    bot.sendMessage({
+    sendMessage(bot, {
         text: 'Trivia stopped.',
         chat_id: chat
     });
@@ -244,7 +250,7 @@ var stopTrivia = function(chat, from) {
 
 var startTrivia = function(chat, from) {
     if (states[chat]) {
-        bot.sendMessage({
+        sendMessage(bot, {
             text: 'Trivia already started!',
             chat_id: chat
         });
@@ -264,7 +270,7 @@ var startTrivia = function(chat, from) {
         players: {}
     };
 
-    bot.sendMessage({
+    sendMessage(bot, {
         text: 'Trivia started!',
         chat_id: chat
     }, function() {
@@ -298,7 +304,7 @@ var verifyAnswer = function(chat, from, text) {
 
             gs.scores[from.id].score++;
 
-            bot.sendMessage({
+            sendMessage(bot, {
                 text: 'Points to ' + from.first_name + '! "' + answer + '" is the correct answer!',
                 chat_id: chat
             }, function() {
@@ -335,7 +341,7 @@ var reportQuestion = function(chat) {
                 return;
             }
 
-            bot.sendMessage({
+            sendMessage(bot, {
                 text: 'Reported question as bad.',
                 chat_id: chat
             });
@@ -344,6 +350,10 @@ var reportQuestion = function(chat) {
 };
 
 var bot;
+var options = {
+    polling: true
+};
+
 Question.count(function(err, questionCnt) {
     if (!questionCnt) {
         console.log('no questions found in database!');
@@ -352,10 +362,8 @@ Question.count(function(err, questionCnt) {
     }
 
     var token = require(process.env.HOME + '/.triviabot/token.js');
-    var Bot = require('node-telegram-bot');
-    bot = new Bot({
-        token: token
-    })
+    var Bot = require('node-telegram-bot-api');
+    bot = new Bot(token, options)
     .on('message', function(msg) {
         if (msg.text) {
             if (!msg.text.indexOf('/trivia')) {
@@ -371,6 +379,4 @@ Question.count(function(err, questionCnt) {
             }
         }
     });
-
-    bot.start();
 });
