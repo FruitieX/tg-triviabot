@@ -23,8 +23,8 @@ var intermissionTime = 10000;
 var states = {};
 
 var sendMessage = function(bot, msg, callback) {
-    console.log('sending message');
-    console.log(msg);
+    //console.log('sending message');
+    //console.log(msg);
     bot.sendMessage(msg.chat_id, msg.text).then(callback);
 };
 
