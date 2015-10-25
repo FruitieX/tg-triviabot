@@ -9,6 +9,6 @@ triviabot for Telegram
    [here](https://www.reddit.com/r/datasets/comments/1uyd0t/200000_jeopardy_questions_in_a_json_file/)
 3. Make sure you have MongoDB setup on your machine. Then:
 
-    npm install
-    node populate_db.js <path-to-questions>.json
-    npm start
+         npm install
+         node populate_db.js <path-to-questions>.json
+         npm start
