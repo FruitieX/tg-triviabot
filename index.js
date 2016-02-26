@@ -310,6 +310,7 @@ var stripExtraChars = function(text) {
     text = text.replace(/\)/g, '');
     text = text.replace(/\\/g, '');
     text = text.replace(/^a\s/g, '');
+    text = text.replace(/^an\s/g, '');
     text = text.replace(/^the\s/g, '');
     return text;
 };
