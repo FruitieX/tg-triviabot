@@ -202,6 +202,19 @@ var nextRound = function(chat) {
                 gs.question = question;
                 gs.hintChars = [];
 
+                // strip some weird characters from answers
+                gs.question.answers.map(function(answer) {
+                    // \" -> "
+                    answer = answer.replace(/\\"/g, '"');
+
+                    // "blahblah" -> blahblah
+                    if (answer[0] === '"' && answer[answer.length - 1] === '"') {
+                        answer = answer.substr(1, answer.length - 2);
+                    }
+
+                    return answer;
+                });
+
                 // add spaces to hint chars
                 var answer = gs.question.answers[0];
                 for (var i = 0; i < answer.length; i++) {
@@ -278,6 +291,16 @@ var startTrivia = function(chat, from) {
     });
 };
 
+var stripExtraChars = function(text) {
+    text = text.toLowerCase();
+    text = text.replace(/"/g, '');
+    text = text.replace(/'/g, '');
+    text = text.replace(/(/g, '');
+    text = text.replace(/)/g, '');
+    text = text.replace(/\\/g, '');
+    return text;
+};
+
 var verifyAnswer = function(chat, from, text) {
     var gs = states[chat];
 
@@ -288,9 +311,9 @@ var verifyAnswer = function(chat, from, text) {
     // for keeping track of players per round
     gs.players[from.id] = true;
 
-    text = text.toLowerCase();
+    text = stripExtraChars(text);
     for (var i = 0; i < gs.question.answers.length; i++) {
-        var answer = gs.question.answers[i].toLowerCase();
+        var answer = stripExtraChars(gs.question.answers[i].toLowerCase());
 
         if (answer === text) {
             if (!gs.scores[from.id]) {
