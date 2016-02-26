@@ -197,6 +197,11 @@ var nextRound = function(chat) {
         Question.count(function(err, questionCnt) {
             var skipCnt = Math.floor(Math.random() * questionCnt);
             Question.findOne().skip(skipCnt).exec(function(err, question) {
+                // <br /> -> '\n'
+                question.question = question.question.replace(/<br \/>/g, '\n');
+                question.question = question.question.replace(/<br\/>/g, '\n');
+                question.question = question.question.replace(/<br>/g, '\n');
+
                 // set game state to active only after we've retrieved the next question
                 gs.active = true;
                 gs.question = question;
