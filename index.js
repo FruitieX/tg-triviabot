@@ -218,7 +218,7 @@ var nextRound = function(chat) {
                 // add spaces to hint chars
                 var answer = gs.question.answers[0];
                 for (var i = 0; i < answer.length; i++) {
-                    if (answer[i] === ' ') {
+                    if (answer[i] === ' ' || answer[i] === '-' || answer[i] === '/' || answer[i] === '&' || answer[i] === '.' || answer[i] === ',') {
                         gs.hintChars.push(i);
                     }
                 }
@@ -295,8 +295,8 @@ var stripExtraChars = function(text) {
     text = text.toLowerCase();
     text = text.replace(/"/g, '');
     text = text.replace(/'/g, '');
-    text = text.replace(/(/g, '');
-    text = text.replace(/)/g, '');
+    text = text.replace(/\(/g, '');
+    text = text.replace(/\)/g, '');
     text = text.replace(/\\/g, '');
     return text;
 };
