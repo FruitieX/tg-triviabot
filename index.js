@@ -207,10 +207,18 @@ var nextRound = function(chat) {
                     // \" -> "
                     answer = answer.replace(/\\"/g, '"');
 
+                    // \' -> '
+                    answer = answer.replace(/\\'/g, '\'');
+
                     // "blahblah" -> blahblah
                     if (answer[0] === '"' && answer[answer.length - 1] === '"') {
                         answer = answer.substr(1, answer.length - 2);
                     }
+
+                    // <br /> -> '\n'
+                    answer = answer.replace(/<br \/>/g, '\n');
+                    answer = answer.replace(/<br\/>/g, '\n');
+                    answer = answer.replace(/<br>/g, '\n');
 
                     return answer;
                 });
@@ -218,7 +226,9 @@ var nextRound = function(chat) {
                 // add spaces to hint chars
                 var answer = gs.question.answers[0];
                 for (var i = 0; i < answer.length; i++) {
-                    if (answer[i] === ' ' || answer[i] === '-' || answer[i] === '/' || answer[i] === '&' || answer[i] === '.' || answer[i] === ',') {
+                    if (answer[i] === ' ' || answer[i] === '-' || answer[i] === '/' ||
+                        answer[i] === '&' || answer[i] === '.' || answer[i] === ',' ||
+                        answer[i] === '(' || answer[i] === ')') {
                         gs.hintChars.push(i);
                     }
                 }
@@ -293,11 +303,14 @@ var startTrivia = function(chat, from) {
 
 var stripExtraChars = function(text) {
     text = text.toLowerCase();
+    text = text.replace(/!/g, '');
     text = text.replace(/"/g, '');
     text = text.replace(/'/g, '');
     text = text.replace(/\(/g, '');
     text = text.replace(/\)/g, '');
     text = text.replace(/\\/g, '');
+    text = text.replace(/^a\s/g, '');
+    text = text.replace(/^the\s/g, '');
     return text;
 };
 
@@ -313,6 +326,7 @@ var verifyAnswer = function(chat, from, text) {
 
     text = stripExtraChars(text);
     for (var i = 0; i < gs.question.answers.length; i++) {
+        var origAnswer = gs.question.answers[i];
         var answer = stripExtraChars(gs.question.answers[i].toLowerCase());
 
         if (answer === text) {
@@ -328,7 +342,7 @@ var verifyAnswer = function(chat, from, text) {
             gs.scores[from.id].score++;
 
             sendMessage(bot, {
-                text: 'Points to ' + from.first_name + '! "' + answer + '" is the correct answer!',
+                text: 'Points to ' + from.first_name + '! "' + origAnswer + '" is the correct answer!',
                 chat_id: chat
             }, function() {
                 printStandings(chat);
