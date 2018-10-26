@@ -23,8 +23,7 @@ var intermissionTime = 10000;
 var states = {};
 
 var sendMessage = function(bot, msg, callback) {
-    //console.log('sending message');
-    //console.log(msg);
+    console.log(`sending message: ${msg.chat_id}: ${msg.text}`);
     bot.sendMessage(msg.chat_id, msg.text).then(callback);
 };
 
@@ -411,6 +410,7 @@ Question.count(function(err, questionCnt) {
     bot = new Bot(token, options)
     .on('message', function(msg) {
         if (msg.text) {
+            console.log(`received message: ${msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`}: ${msg.text}`);
             if (!msg.text.indexOf('/trivia')) {
                 startTrivia(msg.chat.id, msg.from);
             } else if (states[msg.chat.id]) {
