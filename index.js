@@ -224,6 +224,9 @@ var nextRound = function(chat) {
                     answer = answer.replace(/<br\/>/g, '\n');
                     answer = answer.replace(/<br>/g, '\n');
 
+                    // remove backslashes
+                    answer = answer.replace(/\\/g, '');
+
                     return answer;
                 });
 
