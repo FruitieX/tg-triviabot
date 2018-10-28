@@ -212,7 +212,7 @@ var nextRound = function(chat) {
                     answer = answer.replace(/\\"/g, '"');
 
                     // \' -> '
-                    answer = answer.replace(/\\'/g, '\'');
+                    answer = answer.replace(/\\'/g, "'");
 
                     // "blahblah" -> blahblah
                     if (answer[0] === '"' && answer[answer.length - 1] === '"') {
@@ -235,7 +235,8 @@ var nextRound = function(chat) {
                 for (var i = 0; i < answer.length; i++) {
                     if (answer[i] === ' ' || answer[i] === '-' || answer[i] === '/' ||
                         answer[i] === '&' || answer[i] === '.' || answer[i] === ',' ||
-                        answer[i] === '(' || answer[i] === ')') {
+                        answer[i] === '(' || answer[i] === ')' || answer[i] === '\\'||
+                        answer[i] === '\'' ) {
                         gs.hintChars.push(i);
                     }
                 }
